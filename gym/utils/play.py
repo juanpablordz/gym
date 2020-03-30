@@ -12,7 +12,8 @@ except ImportError as e:
 
 from collections import deque
 from pygame.locals import VIDEORESIZE
-
+from IPython import embed
+import os
 def display_arr(screen, arr, video_size, transpose):
     arr_min, arr_max = arr.min(), arr.max()
     arr = 255.0 * (arr - arr_min) / (arr_max - arr_min)
@@ -88,7 +89,7 @@ def play(env, transpose=True, fps=30, zoom=None, callback=None, keys_to_action=N
             assert False, env.spec.id + " does not have explicit key to action mapping, " + \
                           "please specify one manually"
     relevant_keys = set(sum(map(list, keys_to_action.keys()),[]))
-    
+
     video_size=[rendered.shape[1],rendered.shape[0]]
     if zoom is not None:
         video_size = int(video_size[0] * zoom), int(video_size[1] * zoom)
@@ -100,7 +101,15 @@ def play(env, transpose=True, fps=30, zoom=None, callback=None, keys_to_action=N
     screen = pygame.display.set_mode(video_size)
     clock = pygame.time.Clock()
 
+    # XXX:Create directory for saving images:
+    print(video_size)
+    print(pygame.display.list_modes())
+    record = True # XXX: Modify here
+    dir_name = "{}_{}x{}".format(env.spec.id, video_size[0],video_size[1])
+    if not os.path.exists(dir_name):
+        os.mkdir(dir_name)
 
+    i = 0
     while running:
         if env_done:
             env_done = False
@@ -132,6 +141,11 @@ def play(env, transpose=True, fps=30, zoom=None, callback=None, keys_to_action=N
                 video_size = event.size
                 screen = pygame.display.set_mode(video_size)
                 print(video_size)
+
+        # XXX: Record an image for each frame.
+        if record:
+            pygame.image.save(screen, dir_name+"/frame{}.jpeg".format(i))
+        i+=1
 
         pygame.display.flip()
         clock.tick(fps)
@@ -174,7 +188,7 @@ def main():
     parser.add_argument('--env', type=str, default='MontezumaRevengeNoFrameskip-v4', help='Define Environment')
     args = parser.parse_args()
     env = gym.make(args.env)
-    play(env, zoom=4, fps=60)
+    play(env, zoom=8, fps=60)
 
 
 if __name__ == '__main__':
